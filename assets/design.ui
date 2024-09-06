@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>480</width>
+    <height>320</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>480</width>
+    <height>320</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>480</width>
+    <height>320</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Pico 4 Toolbox</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="title">
+       <string>Output (logs and adb)</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QTextEdit" name="textEdit">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>480</width>
+     <height>42</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <widget class="QMenu" name="menuActions">
+    <property name="title">
+     <string>Device</string>
+    </property>
+    <addaction name="actionCheck_Region_on_Pico"/>
+    <addaction name="actionCheck_OEM_State"/>
+    <addaction name="actionScan_for_Devices"/>
+   </widget>
+   <widget class="QMenu" name="menuStore">
+    <property name="title">
+     <string>Store</string>
+    </property>
+    <addaction name="actionSwitch_to_Global_Store"/>
+    <addaction name="actionSwitch_to_China_Store"/>
+    <addaction name="actionSwitch_Buisness_Store_to_Global_Store"/>
+   </widget>
+   <addaction name="menuActions"/>
+   <addaction name="menuStore"/>
+  </widget>
+  <action name="actionCheck_Region_on_Pico">
+   <property name="text">
+    <string>Check Region on Pico</string>
+   </property>
+  </action>
+  <action name="actionSwitch_to_Global_Store">
+   <property name="text">
+    <string>Switch to Global Store</string>
+   </property>
+  </action>
+  <action name="actionSwitch_to_China_Store">
+   <property name="text">
+    <string>Switch to China Store</string>
+   </property>
+  </action>
+  <action name="actionSwitch_Buisness_Store_to_Global_Store">
+   <property name="text">
+    <string>Switch Buisness Store to Global Store</string>
+   </property>
+  </action>
+  <action name="actionCheck_OEM_State">
+   <property name="text">
+    <string>Check OEM State</string>
+   </property>
+  </action>
+  <action name="actionScan_for_Devices">
+   <property name="text">
+    <string>Scan for Devices</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
