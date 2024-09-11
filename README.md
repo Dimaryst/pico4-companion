@@ -16,7 +16,13 @@ The **Pico 4 Multitool** application is designed to help users manage their **Pi
   - PyQt5
   - Platform
   - OS
-
+## Usage
+```bash
+git clone https://github.com/Dimaryst/pico4-companion
+cd pico4-companion
+pip3 install -r requirements.txt
+python3 main.py
+```
 ## Basic batch script provided by Owomushi
 - http://owomushi.com
 - https://discord.gg/BSWfvH4cm8
