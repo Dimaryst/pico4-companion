@@ -32,9 +32,14 @@ class MainInstaller(QtWidgets.QMainWindow, Ui_MainWindow):
         self.device_check_timer = QTimer(self)
         self.device_check_timer.timeout.connect(self.adb_manager.check_connected_device)
         self.device_check_timer.start(1000)
-        self.actionScan_for_Devices.triggered.connect(self.adb_manager.adb_devices)
+        self.actionScan_for_Devices.triggered.connect(self.adb_manager.check_connected_device)
         self.actionCheck_Region_on_Pico.triggered.connect(self.adb_manager.install_apks_and_get_region)
         self.actionCheck_OEM_State.triggered.connect(self.adb_manager.get_oem_state)
+        self.actionShow_installed_Packages.triggered.connect(self.adb_manager.adb_list_packages)
+        self.actionOpen_Android_Settings.triggered.connect(lambda: self.adb_manager.adb_start_service(service="android.settings.SETTINGS"))
+        self.actionSwitch_to_Global_Store.triggered.connect(lambda: self.adb_manager.switch_store(region='US'))
+        self.actionSwitch_to_China_Store.triggered.connect(lambda: self.adb_manager.switch_store(region='CN'))
+        self.actionSwitch_Buisness_Store_to_Global_Store.setDisabled(True)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

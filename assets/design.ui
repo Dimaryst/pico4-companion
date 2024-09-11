@@ -74,6 +74,8 @@
     <addaction name="actionCheck_Region_on_Pico"/>
     <addaction name="actionCheck_OEM_State"/>
     <addaction name="actionScan_for_Devices"/>
+    <addaction name="actionOpen_Android_Settings"/>
+    <addaction name="actionShow_installed_Packages"/>
    </widget>
    <widget class="QMenu" name="menuStore">
     <property name="title">
@@ -88,7 +90,7 @@
   </widget>
   <action name="actionCheck_Region_on_Pico">
    <property name="text">
-    <string>Check Region on Pico</string>
+    <string>Check Region</string>
    </property>
   </action>
   <action name="actionSwitch_to_Global_Store">
@@ -114,6 +116,16 @@
   <action name="actionScan_for_Devices">
    <property name="text">
     <string>Scan for Devices</string>
+   </property>
+  </action>
+  <action name="actionOpen_Android_Settings">
+   <property name="text">
+    <string>Open Android Settings</string>
+   </property>
+  </action>
+  <action name="actionShow_installed_Packages">
+   <property name="text">
+    <string>Show installed Packages</string>
    </property>
   </action>
  </widget>
