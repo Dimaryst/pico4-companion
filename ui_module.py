@@ -31,7 +31,7 @@ class MainInstaller(QtWidgets.QMainWindow, Ui_MainWindow):
     def connect_signals(self):
         self.device_check_timer = QTimer(self)
         self.device_check_timer.timeout.connect(self.adb_manager.regular_check_devices)
-        self.device_check_timer.start(1000)
+        self.device_check_timer.start(7000)
         self.actionScan_for_Devices.triggered.connect(self.adb_manager.check_connected_device)
         self.actionCheck_Region_on_Pico.triggered.connect(self.adb_manager.install_apks_and_get_region)
         self.actionCheck_OEM_State.triggered.connect(self.adb_manager.get_oem_state)
