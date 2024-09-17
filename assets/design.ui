@@ -66,7 +66,7 @@
      <x>0</x>
      <y>0</y>
      <width>480</width>
-     <height>24</height>
+     <height>42</height>
     </rect>
    </property>
    <property name="font">
@@ -81,8 +81,10 @@
     <addaction name="actionCheck_Region_on_Pico"/>
     <addaction name="actionCheck_OEM_State"/>
     <addaction name="actionScan_for_Devices"/>
+    <addaction name="separator"/>
     <addaction name="actionOpen_Android_Settings"/>
     <addaction name="actionShow_installed_Packages"/>
+    <addaction name="actionDisable_Explore_and_User_Guide"/>
    </widget>
    <widget class="QMenu" name="menuStore">
     <property name="title">
@@ -133,6 +135,11 @@
   <action name="actionShow_installed_Packages">
    <property name="text">
     <string>Show installed Packages</string>
+   </property>
+  </action>
+  <action name="actionDisable_Explore_and_User_Guide">
+   <property name="text">
+    <string>Disable Explore and User Guide</string>
    </property>
   </action>
  </widget>

@@ -15,220 +15,214 @@ class ADBManager:
         self.apk_global_folder = os.path.join(os.getcwd(), "apk", "global")
         self.apk_china_folder = os.path.join(os.getcwd(), "apk", "china")
         self.apk_matrix_folder = os.path.join(os.getcwd(), "apk", "matrix")
-        
+        self.adb_processes = {}
+        self.apk_queue = deque()
         self.command_queue = deque()
-        self.current_process = None
-        self.is_running = False
 
-    def _start_next_command(self):
-        if not self.is_running and self.command_queue:
-            command, args, stdout_handler, start_handler, finish_handler = self.command_queue.popleft()
-            self._start_process(command, args, stdout_handler, start_handler, finish_handler)
+    def disable_explore_and_user_guide(self):
+        self.parent.textEdit.insertPlainText("\n" + "Disablining services com.picovr.activitycenter, com.pvr.home and com.picovr.guide.")
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+        self._start_process('adb_disable_com.picovr.activitycenter', ["shell", "pm", "disable-user", "--user", "0", "com.picovr.activitycenter"], self.handle_output_adb_disable_compicovractivitycenter)
+        self._start_process('adb_disable_com.pvr.home', ["shell", "pm", "disable-user", "--user", "0", "com.pvr.home"], self.handle_output_adb_disable_compvrhome)
+        self._start_process('adb_disable_com.picovr.guide', ["shell", "pm", "disable-user", "--user", "0", "com.picovr.guide"], self.handle_output_adb_disable_compicovrguide)
 
-    def _queue_command(self, command, args, stdout_handler=None, start_handler=None, finish_handler=None):
-        self.command_queue.append((command, args, stdout_handler, start_handler, finish_handler))
-        if not self.is_running:
-            self._start_next_command()
+    def handle_output_adb_disable_compicovrguide(self):
+        output = self._read_output('adb_disable_com.picovr.guide')
+        self.parent.textEdit.insertPlainText("\n" + output)
+        self.parent.textEdit.moveCursor(QTextCursor.End)
 
-    def _start_process(self, name, arguments, stdout_handler=None, start_handler=None, finish_handler=None):
-        self.is_running = True
-        self.current_process = QProcess()
-        process = self.current_process
+    def handle_output_adb_disable_compvrhome(self):
+        output = self._read_output('adb_disable_com.pvr.home')
+        self.parent.textEdit.insertPlainText("\n" + output)
+        self.parent.textEdit.moveCursor(QTextCursor.End)
 
-        if start_handler:
-            process.started.connect(start_handler)
-
-        if stdout_handler:
-            process.readyReadStandardOutput.connect(stdout_handler)
-
-        def on_finished():
-            self.is_running = False
-            if finish_handler:
-                finish_handler()
-            self._start_next_command()
-        process.finished.connect(on_finished)
-
-        process.setProcessChannelMode(QProcess.MergedChannels)
-        process.start(self.adb_bin, arguments)
+    def handle_output_adb_disable_compicovractivitycenter(self):
+        output = self._read_output('adb_disable_com.picovr.activitycenter')
+        self.parent.textEdit.insertPlainText("\n" + output)
+        self.parent.textEdit.moveCursor(QTextCursor.End) 
+       
+    def empty_handler(self):
+        pass
 
     def check_connected_device(self):
         self._start_process('adb_devices', ["devices"], self.handle_check_connected_device)
 
-    def regular_check_devices(self):
-        self._start_process('adb_devices', ["devices"], self.regular_handle_check_connected_device)
-
-    def regular_handle_check_connected_device(self):
-        output = self._read_output()
-        lines = output.split('\n')
-        connected_devices = [line for line in lines if "\tdevice" in line or "\tsideload" in line]
-        if connected_devices:
-            device_info = connected_devices[0].split('\t')
-            device_serial = device_info[0]
-            device_status = device_info[1]
-            if device_status == "device":
-                self.parent.groupBox.setTitle(f"Android Debug Bridge Logs [Connected {device_serial}]")
-            elif device_status == "sideload":
-                self.parent.groupBox.setTitle(f"Android Debug Bridge Logs [Connected {device_serial} (sideload)]")
-        else:
-            self.parent.groupBox.setTitle("Android Debug Bridge Logs [Disconnected]")
-
     def handle_check_connected_device(self):
-        output = self._read_output()
+        output = self._read_output('adb_devices')
         lines = output.split('\n')
         connected_devices = [line for line in lines if "\tdevice" in line or "\tsideload" in line]
         if connected_devices:
             device_info = connected_devices[0].split('\t')
             device_serial = device_info[0]
             device_status = device_info[1]
+
             if device_status == "device":
                 self.parent.groupBox.setTitle(f"Android Debug Bridge Logs [Connected {device_serial}]")
-                self.parent.textEdit.insertPlainText(f"\nConnected {device_serial}")
             elif device_status == "sideload":
-                self.parent.groupBox.setTitle(f"Android Debug Bridge Logs [Connected {device_serial} (sideload)]")
+                self.parent.groupBox.setTitle(f"Android Debug Bridge Logs [Connected {device_serial} IN SIDELOAD MODE]")
         else:
             self.parent.groupBox.setTitle("Android Debug Bridge Logs [Disconnected]")
-            self.parent.textEdit.insertPlainText(f"\nDevice is not connected")
 
-    def install_apks_and_get_region(self):
+    def check_region(self):
         self.parent.textEdit.moveCursor(QTextCursor.End)
-        # self.parent.textEdit.insertPlainText("\nStarting APK installation...")
-        self.install_apks_from_folder(self.apk_region_folder)
-        self._queue_command('adb_get_region', ['shell', 'settings', 'get', 'global', 'user_settings_initialized'], self.handle_output_get_region)
+        self.parent.textEdit.insertPlainText("\n" + "Installing APK's...")
+        apk_files = [f for f in os.listdir(self.apk_region_folder) if f.endswith('.apk')]
+        self.apk_queue.extend(apk_files)
+        self.install_next_apk()
 
-    def install_apks_from_folder(self, folder):
-        apk_files = [os.path.join(folder, f) for f in os.listdir(folder) if f.endswith('.apk')]
-        if apk_files:
-            for apk_file in apk_files:
-                self._queue_command('adb_install', ["install", apk_file], self.empty_handler)
-        else:
+    def install_next_apk(self):
+        if self.apk_queue:
+            apk_file = self.apk_queue.popleft()
+            apk_path = os.path.join(self.apk_region_folder, apk_file)
+            self.parent.textEdit.insertPlainText(f"\nInstalling {apk_path}...")
             self.parent.textEdit.moveCursor(QTextCursor.End)
-            self.parent.textEdit.insertPlainText("\nNo APK files found in folder.")
-
-    def get_oem_state(self):
-        self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText("\nChecking OEM State...")
-        self._queue_command('adb_get_oem_state', ['shell', 'getprop', 'ro.oem.state'], self.handle_output_get_oem_state)
-    
-    def handle_output_get_oem_state(self):
-        output = self._read_output()
-        oem_state = 'Non-OEM' if output == '' else 'OEM' if output == 'true' else 'Unknown'
-        self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText(f"\nOEM STATE: {oem_state} ({output})")
-
-    def handle_output_get_region(self):
-        output = self._read_output()
-        self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText(f"\nCURRENT REGION: {output}")
-
-    def adb_install(self, app_path):
-        self._queue_command('adb_install', ["install", app_path], self.empty_handler)
-
-    def handle_output_install(self):
-        output = self._read_output()
-        self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText("\n" + output)
-
-    def adb_uninstall(self, app_id):
-        self._queue_command('adb_uninstall', ["uninstall", app_id], self.handle_output_uninstall)
-
-    def handle_output_uninstall(self):
-        output = self._read_output()
-        self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText("\n" + output)
-
-    def switch_store(self, region='US'):
-        self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText(f"\nStarting Region change to ({region})...")
-        
-        # Установка региона
-        self._queue_command('adb_set_region', ['shell', 'settings', 'put', 'global', 'user_settings_initialized', region], self.empty_handler)
-        self._queue_command(f'adb_clear_com.picovr.store', ['shell', 'pm', 'clear', "com.picovr.store"], self.empty_handler)
-        self._queue_command(f'adb_clear_com.picovr.vrusercenter', ['shell', 'pm', 'clear', "com.picovr.vrusercenter"], self.empty_handler)
-        self._queue_command(f'adb_clear_com.pvr.home', ['shell', 'pm', 'clear', "com.pvr.home"], self.empty_handler)
-
-        self._queue_command(f'adb_uninstall_com.picovr.store', ["shell", "pm", "uninstall", "-k", "--user", "0", 'com.picovr.store'], self.empty_handler)
-        self._queue_command(f'adb_uninstall_com.picovr.vrusercenter', ["shell", "pm", "uninstall", "-k", "--user", "0", 'com.picovr.vrusercenter'], self.empty_handler)
-        self._queue_command(f'adb_uninstall_com.pvr.home', ["shell", "pm", "uninstall", "-k", "--user", "0", 'com.pvr.home'], self.empty_handler)
-
-        self._queue_command(f'adb_install_existing_com.picovr.store', ['shell', 'pm', 'install-existing', 'com.picovr.store'], self.empty_handler)
-        self._queue_command(f'adb_install_existing_com.picovr.vrusercenter', ['shell', 'pm', 'install-existing', 'com.picovr.vrusercenter'], self.empty_handler)
-        self._queue_command(f'adb_install_existing_com.pvr.home', ['shell', 'pm', 'install-existing', 'com.pvr.home'], self.empty_handler)
-
-        # Установка APK для региона
-        if region == 'US':
-            self.parent.textEdit.insertPlainText("\nInstalling APKs from Global folder...")
-            self.install_apks_from_folder(self.apk_global_folder)
-        elif region == 'CN':
-            self.parent.textEdit.insertPlainText("\nInstalling APKs from China folder...")
-            self.install_apks_from_folder(self.apk_china_folder)
+            self._start_process(
+                name=apk_file,
+                arguments=["install", apk_path],
+                stdout_handler=lambda: self.read_output_install_apk(apk_file),
+                finish_handler=self.on_install_finished
+            )
         else:
-            self.parent.textEdit.insertPlainText("\nError region selected")
+            self.parent.textEdit.insertPlainText("\nAll APK installations finished.")
+            self.adb_check_region_settings()
+            self.parent.textEdit.moveCursor(QTextCursor.End)
 
-        # Установка APK из Matrix
-        self.parent.textEdit.insertPlainText("\nInstalling APKs from Matrix folder...")
-        self.install_apks_from_folder(self.apk_matrix_folder)
+    def store_cleanup(self, new_region="US"):
+        self.parent.textEdit.insertPlainText("\nStarting Store Cleaning...")
+        self.parent.textEdit.insertPlainText(f"\nSetting Store to {new_region}...")
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+        commands = [
+            ["shell", "settings", "put", "global", "user_settings_initialized", new_region],
+            ["shell", "pm", "clear", "com.picovr.store"],
+            ["shell", "pm", "clear", "com.picovr.vrusercenter"],
+            ["shell", "pm", "clear", "com.pvr.home"],
+            ["shell", "pm", "uninstall", "-k", "--user", "0", "com.picovr.store"],
+            ["shell", "pm", "uninstall", "-k", "--user", "0", "com.picovr.vrusercenter"],
+            ["shell", "pm", "uninstall", "-k", "--user", "0", "com.pvr.home"],
+            ["shell", "pm", "install-existing", "com.picovr.vrusercenter"],
+            ["shell", "pm", "install-existing", "com.pvr.home"],
+            ["shell", "pm", "install-existing", "com.picovr.store"]
+        ]
+        
+        self.command_queue.extend(commands)
+        self.execute_next_command_store(new_region)
 
-        self._queue_command('adb_get_region', ['shell', 'settings', 'get', 'global', 'user_settings_initialized'], self.handle_output_get_region)
+    def install_new_store(self, new_region="US"):
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+        self.parent.textEdit.insertPlainText("\n" + "Installing APK's...")
+        matrix_files = [os.path.join(self.apk_matrix_folder, f) for f in os.listdir(self.apk_matrix_folder) if f.endswith('.apk')]
 
-    def adb_list_packages(self):
-        self._queue_command('adb_list_packages', ["shell", "pm", "list", "packages"], self.handle_output_list_packages)
+        if new_region == "US":
+            apk_files = [os.path.join(self.apk_global_folder, f) for f in os.listdir(self.apk_global_folder) if f.endswith('.apk')]
+        elif new_region == "CN":
+            apk_files = [os.path.join(self.apk_china_folder, f) for f in os.listdir(self.apk_china_folder) if f.endswith('.apk')]
+        else:
+            apk_files = []
+        apk_files += matrix_files
 
-    def handle_output_list_packages(self):
-        output = self._read_output()
+        self.apk_queue.extend(apk_files)
+        self.install_next_apk()
+
+    def execute_next_command_store(self, new_region):
+        if self.command_queue:
+            command = self.command_queue.popleft()
+            command_str = ' '.join(command)
+            self.parent.textEdit.moveCursor(QTextCursor.End)
+            self.parent.textEdit.insertPlainText(f"\Running: {command_str}...")
+            self._start_process(
+                name=command_str,
+                arguments=command,
+                stdout_handler=lambda: self.read_output_store_clean(command_str),
+                finish_handler=self.on_command_finished(new_region)
+            )
+        else:
+            print(new_region)
+            self.install_new_store(new_region)
+            self.parent.textEdit.insertPlainText("\nAll commands executed.")
+
+    def read_output_store_clean(self, process_name):
+        output = self._read_output(process_name)
+        self.parent.textEdit.insertPlainText("\n" + output)
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+
+    def on_command_finished(self, new_region='US'):
+        self.parent.textEdit.insertPlainText("\nDone.\n")
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+        self.execute_next_command_store(new_region)
+
+    def adb_check_region_settings(self):
+        self._start_process('adb_check_region_settings', ["shell", "settings", "get", "global", "user_settings_initialized"], self.handle_check_region_settings)
+
+    def handle_check_region_settings(self):
+        output = self._read_output('adb_check_region_settings')
+        self.parent.textEdit.insertPlainText("\nDevice Region: " + output)
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+
+    def read_output_install_apk(self, process_name):
+        output = self._read_output(process_name)
         self.parent.textEdit.moveCursor(QTextCursor.End)
         self.parent.textEdit.insertPlainText("\n" + output)
+
+    def on_install_finished(self):
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+        self.parent.textEdit.insertPlainText("\nInstallation finished.\n")
+        self.install_next_apk()
 
     def adb_start_service(self, service="android.settings.SETTINGS"):
         self.parent.textEdit.moveCursor(QTextCursor.End)
         self.parent.textEdit.insertPlainText("\n" + "Running...")
-        self._queue_command('adb_start_service', ["shell", "am", "start", "-a", service], self.handle_output_start_service)
+        self._start_process('adb_start_service', ["shell", "am", "start", "-a", service], self.handle_output_start_service)
 
     def handle_output_start_service(self):
-        output = self._read_output()
+        output = self._read_output('adb_start_service')
         self.parent.textEdit.moveCursor(QTextCursor.End)
         self.parent.textEdit.insertPlainText("\n" + output)
 
-    def adb_reboot_bootloader(self):
-        self.parent.progressBar.setValue(0)
-        self._queue_command('adb_reboot_bootloader', ["reboot", "bootloader"], self.handle_output_reboot_bootloader, self.show_progress_bar, self.hide_progress_bar)
+    def adb_devices(self):
+        self._start_process('adb_devices', ["devices"], self.handle_output_devices)
 
-    def handle_output_reboot_bootloader(self):
-        output = self._read_output()
+    def handle_output_devices(self):
+        output = self._read_output('adb_devices')
+        self.parent.textEdit.insertPlainText("\n" + output)
+        self.parent.textEdit.moveCursor(QTextCursor.End)
+        
+    def adb_list_packages(self):
+        self._start_process('adb_list_packages', ["shell", "pm", "list", "packages"], self.handle_output_list_packages)
+
+    def handle_output_list_packages(self):
+        output = self._read_output('adb_list_packages')
         self.parent.textEdit.moveCursor(QTextCursor.End)
         self.parent.textEdit.insertPlainText("\n" + output)
-
-    def adb_sideload(self, zip_path):
-        self.parent.progressBar.setValue(0)
-        self._queue_command('adb_sideload', ["sideload", zip_path], self.handle_output_sideload, self.show_progress_bar, self.hide_progress_bar)
-
-    def handle_output_sideload(self):
-        output = self._read_output()
-        percentage = self.extract_percentage(output)
-        if percentage is not None:
-            self.parent.progressBar.setValue(percentage)
         self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText("\n" + output)
 
-    def extract_percentage(self, output):
-        try:
-            start_index = output.find("(~")
-            end_index = output.find("%)", start_index)
-            if start_index != -1 and end_index != -1:
-                percentage_str = output[start_index + 2:end_index]
-                return int(percentage_str)
-        except ValueError:
-            return None
-        return None
+    def get_oem_state(self):
+        self.parent.textEdit.insertPlainText("\n" + "Checking \"ro.oem.state\"...")
+        self._start_process('adb_get_oem_state', ['shell', 'getprop', 'ro.oem.state'], self.handle_output_get_oem_state)
 
-    def empty_handler(self):
-        pass
+    def handle_output_get_oem_state(self):
+        output = self._read_output('adb_get_oem_state')
+        if output == "true":
+            self.parent.textEdit.insertPlainText("\nState: OEM")
+        elif output == "":
+            self.parent.textEdit.insertPlainText("\nState: Non-OEM")
+        else:
+            self.parent.textEdit.insertPlainText("\nFailed to get OEM state!")
 
-    def show_progress_bar(self):
-        self.parent.progressBar.setVisible(True)
+        self.parent.textEdit.moveCursor(QTextCursor.End)
 
-    def hide_progress_bar(self):
-        self.parent.progressBar.setVisible(False)
 
-    def _read_output(self):
-        output = self.current_process.readAllStandardOutput()
+    def _start_process(self, name, arguments, stdout_handler, start_handler=None, finish_handler=None):
+        self.adb_processes[name] = QProcess()
+        process = self.adb_processes[name]
+        if start_handler:
+            process.started.connect(start_handler)
+        process.readyReadStandardOutput.connect(stdout_handler)
+        if finish_handler:
+            process.finished.connect(finish_handler)
+        process.setProcessChannelMode(QProcess.MergedChannels)
+        process.start(self.adb_bin, arguments)
+
+    def _read_output(self, process_name):
+        process = self.adb_processes[process_name]
+        output = process.readAllStandardOutput()
         return QTextCodec.codecForLocale().toUnicode(output).strip()

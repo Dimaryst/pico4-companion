@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\assets\design.ui'
+# Form implementation generated from reading ui file 'assets/design.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -45,7 +45,7 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 480, 24))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 480, 42))
         font = QtGui.QFont()
         font.setPointSize(12)
         self.menubar.setFont(font)
@@ -71,11 +71,15 @@ class Ui_MainWindow(object):
         self.actionOpen_Android_Settings.setObjectName("actionOpen_Android_Settings")
         self.actionShow_installed_Packages = QtWidgets.QAction(MainWindow)
         self.actionShow_installed_Packages.setObjectName("actionShow_installed_Packages")
+        self.actionDisable_Explore_and_User_Guide = QtWidgets.QAction(MainWindow)
+        self.actionDisable_Explore_and_User_Guide.setObjectName("actionDisable_Explore_and_User_Guide")
         self.menuActions.addAction(self.actionCheck_Region_on_Pico)
         self.menuActions.addAction(self.actionCheck_OEM_State)
         self.menuActions.addAction(self.actionScan_for_Devices)
+        self.menuActions.addSeparator()
         self.menuActions.addAction(self.actionOpen_Android_Settings)
         self.menuActions.addAction(self.actionShow_installed_Packages)
+        self.menuActions.addAction(self.actionDisable_Explore_and_User_Guide)
         self.menuStore.addAction(self.actionSwitch_to_Global_Store)
         self.menuStore.addAction(self.actionSwitch_to_China_Store)
         self.menuStore.addAction(self.actionSwitch_Buisness_Store_to_Global_Store)
@@ -99,3 +103,4 @@ class Ui_MainWindow(object):
         self.actionScan_for_Devices.setText(_translate("MainWindow", "Scan for Devices"))
         self.actionOpen_Android_Settings.setText(_translate("MainWindow", "Open Android Settings"))
         self.actionShow_installed_Packages.setText(_translate("MainWindow", "Show installed Packages"))
+        self.actionDisable_Explore_and_User_Guide.setText(_translate("MainWindow", "Disable Explore and User Guide"))
