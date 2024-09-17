@@ -54,7 +54,10 @@ class ADBManager:
     def check_connected_device(self):
         self._start_process('adb_devices', ["devices"], self.handle_check_connected_device)
 
-    def handle_check_connected_device(self):
+    def regular_check_devices(self):
+        self._start_process('adb_devices', ["devices"], self.regular_handle_check_connected_device)
+
+    def regular_handle_check_connected_device(self):
         output = self._read_output()
         lines = output.split('\n')
         connected_devices = [line for line in lines if "\tdevice" in line or "\tsideload" in line]
@@ -69,9 +72,26 @@ class ADBManager:
         else:
             self.parent.groupBox.setTitle("Android Debug Bridge Logs [Disconnected]")
 
+    def handle_check_connected_device(self):
+        output = self._read_output()
+        lines = output.split('\n')
+        connected_devices = [line for line in lines if "\tdevice" in line or "\tsideload" in line]
+        if connected_devices:
+            device_info = connected_devices[0].split('\t')
+            device_serial = device_info[0]
+            device_status = device_info[1]
+            if device_status == "device":
+                self.parent.groupBox.setTitle(f"Android Debug Bridge Logs [Connected {device_serial}]")
+                self.parent.textEdit.insertPlainText(f"\nConnected {device_serial}")
+            elif device_status == "sideload":
+                self.parent.groupBox.setTitle(f"Android Debug Bridge Logs [Connected {device_serial} (sideload)]")
+        else:
+            self.parent.groupBox.setTitle("Android Debug Bridge Logs [Disconnected]")
+            self.parent.textEdit.insertPlainText(f"\nDevice is not connected")
+
     def install_apks_and_get_region(self):
         self.parent.textEdit.moveCursor(QTextCursor.End)
-        self.parent.textEdit.insertPlainText("\nStarting APK installation...")
+        # self.parent.textEdit.insertPlainText("\nStarting APK installation...")
         self.install_apks_from_folder(self.apk_region_folder)
         self._queue_command('adb_get_region', ['shell', 'settings', 'get', 'global', 'user_settings_initialized'], self.handle_output_get_region)
 
