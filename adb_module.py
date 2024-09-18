@@ -128,7 +128,7 @@ class ADBManager:
             command = self.command_queue.popleft()
             command_str = ' '.join(command)
             self.parent.textEdit.moveCursor(QTextCursor.End)
-            self.parent.textEdit.insertPlainText(f"\Running: {command_str}...")
+            self.parent.textEdit.insertPlainText(f"\nRunning: {command_str}...")
             self._start_process(
                 name=command_str,
                 arguments=command,
